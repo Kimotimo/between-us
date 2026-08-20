@@ -49,6 +49,8 @@ model Meeting{
 model Location{
   id String @id @default(uuid())
   startArea String
+  latitude Float?
+  longitude Float?
   currentTime DateTime @default(now())
 
   participation Participant @relation(fields: [participationId], references: [id])

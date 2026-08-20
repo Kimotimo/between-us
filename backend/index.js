@@ -76,12 +76,14 @@ app.post('/meetings/:id/participants', async(req, res) => {
 app.post('/participants/:id/location', async(req, res) => {
     try{
         const participationId = req.params.id;
-        const { startArea } = req.body;
+        const { startArea, latitude, longitude } = req.body;
 
         const newLocation = await prisma.location.create({
             data: {
                 participationId : participationId,
                 startArea: startArea,
+                latitude: latitude,
+                longitude: longitude,
             }
         });
 
@@ -106,6 +108,36 @@ app.get('/participants/:id/location', async(req, res) => {
         res.status(500).json({ error: "장소 조회에 실패했습니다"});
     }
 })
+
+app.get('/meetings/:id/midpoint', async(req, res) => {
+    try{
+        const meetingId = req.params.id;
+        const participants = await prisma.participant.findMany({
+            where: { meetingId: meetingId },
+            include: {location: true },
+        });
+
+        const locations = participants
+            .filter(p => p.location !== null)
+            .map(p => p.location);
+
+        if (locations.length === 0){
+            res.status(400).json({ error: "출발지를 입력한 참가자가 없습니다" });
+                return;
+        }
+
+        const avgLatitude = locations.reduce((sum, loc) => sum + loc.latitude, 0)/ locations.length;
+        const avgLongitude = locations.reduce((sum,loc) => sum + loc.longitude, 0)/ locations.length;
+
+        res.json({
+            midpoint: { latitude: avgLatitude, longitude: avgLongitude },
+            participantCount: locations.length,
+        });
+    } catch(error){
+        console.error(error)
+        res.status(500).json({ error: "중간지점을 구하는 과정에서 오류가 발생했습니다."})
+    }
+});
 
 app.listen(port, () => {
     console.log('server Connecting');
