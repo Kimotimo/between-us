@@ -73,10 +73,32 @@ app.post('/meetings/:id/participants', async(req, res) => {
     }
 })
 
+//카카오 지오코딩 api 호출코드
+async function getCoordinates(address) {
+    const response = await fetch(
+        `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(address)}`,
+        {
+            headers: {
+                Authorization: `KakaoAK ${process.env.KAKAO_API_KEY}`,
+            },
+        }
+    );
+    const data = await response.json();
+
+    if (data.documents.length === 0) {
+        throw new Error("해당 주소를 찾을 수 없습니다");
+    }
+
+    const { x, y } = data.documents[0];
+    return { latitude: parseFloat(y), longitude: parseFloat(x) };
+}
+
+
 app.post('/participants/:id/location', async(req, res) => {
     try{
         const participationId = req.params.id;
-        const { startArea, latitude, longitude } = req.body;
+        const { startArea } = req.body;
+        const { latitude, longitude } = await getCoordinates(startArea);
 
         const newLocation = await prisma.location.create({
             data: {
