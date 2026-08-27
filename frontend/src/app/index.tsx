@@ -1,12 +1,18 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>우리사이</Text>
       <Text style={styles.subtitle}>중간지점에서 만나요</Text>
 
-      <Pressable style={styles.button}>
+      <Pressable
+        style={styles.button}
+        onPress={() => router.push('/create-meeting')}
+      >
         <Text style={styles.buttonText}>모임 만들기</Text>
       </Pressable>
     </View>

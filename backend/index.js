@@ -161,6 +161,32 @@ app.get('/meetings/:id/midpoint', async(req, res) => {
     }
 });
 
+app.get('/search/address', async (req, res) => {
+    try {
+        const { query } = req.query;
+
+        const response = await fetch(
+            `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}`,
+            {
+                headers: { Authorization: `KakaoAK ${process.env.KAKAO_API_KEY}` },
+            }
+        );
+        const data = await response.json();
+
+        const results = data.documents.map(doc => ({
+            name: doc.place_name,
+            address: doc.address_name,
+            latitude: parseFloat(doc.y),
+            longitude: parseFloat(doc.x),
+        }));
+
+        res.json(results);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "주소 검색에 실패했습니다" });
+    }
+});
+
 app.listen(port, () => {
     console.log('server Connecting');
 });
